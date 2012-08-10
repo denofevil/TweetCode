@@ -38,7 +38,7 @@ public class TweetCodeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TweetCodeAction.class);
 
   public TweetCodeAction() {
-    super(IconLoader.findIcon("/twitter-bird-light-bgs.png"));
+    super(null, null, IconLoader.findIcon("/twitter-bird-light-bgs.png"));
   }
 
   @Override

@@ -2,8 +2,7 @@
   <id>com.github.denofevil.TweetCode</id>
   <name>TweetCode</name>
   <version>1.1</version>
-  <vendor email="dennis.ushakov@jetbrains.com" url="https://github.com/denofevil/TweetCode">Dennis Ushakov</vendor>
-  <vendor email="alexander.zolotov@jetbrains.com" url="https://github.com/zolotov">Alexander Zolotov</vendor>
+  <vendor email="dennis.ushakov@jetbrains.com, alexander.zolotov@jetbrains.com" url="https://github.com/denofevil/TweetCode">Dennis Ushakov, Alexander Zolotov</vendor>
 
   <description><![CDATA[
       Tweets selected code

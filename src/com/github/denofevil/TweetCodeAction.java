@@ -13,7 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.mac.foundation.ID;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -27,9 +29,13 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import static com.intellij.ui.mac.foundation.Foundation.*;
+import static java.io.File.createTempFile;
 
 /**
  * @author Dennis.Ushakov
@@ -57,14 +63,39 @@ public class TweetCodeAction extends AnAction {
     selectionModel.removeSelection();
     final EditorFragmentComponent fragment = EditorFragmentComponent.createEditorFragmentComponent(editor, startLine, endLine, false, false);
     try {
-      doTweet(project, fragment);
+	    if(SystemInfo.isMacOSMountainLion) {
+		    doMountainLionTweet(project, fragment);
+	    } else {
+        doTweet(project, fragment);
+	    }
     } catch (Exception e1) {
       e1.printStackTrace();
     }
     selectionModel.setSelection(start, end);
   }
 
-  private void doTweet(Project project, final EditorFragmentComponent fragment) throws Exception {
+	private void doMountainLionTweet(Project project, EditorFragmentComponent fragment) throws Exception {
+		BufferedImage image = createBufferedImage(fragment);
+		try {
+			File tempFile = createTempFile("idea", "tweet.png");
+			tempFile.deleteOnExit();
+			ImageIO.write(image, "png", tempFile);
+			final ID nsImage = invoke(invoke("NSImage", "alloc"), "initByReferencingFile:", nsString(tempFile.getAbsolutePath()));
+			final ID shareItems = invoke(invoke("NSArray", "alloc"), "initWithObjects:", nsImage);
+			ID sharingService = invoke(getObjcClass("NSSharingService"), "sharingServiceNamed:", nsString("com.apple.share.Twitter.post"));
+			if(!sharingService.equals(ID.NIL)) {
+				invoke(sharingService, "performWithItems:", shareItems);
+			} else {
+				//fallback
+				doTweet(project, fragment);
+			}
+		} catch (IOException e) {
+			LOG.error(e);
+			Messages.showErrorDialog(project, "Failed to tweet code", "Can't Tweet :(");
+		}
+	}
+
+	private void doTweet(Project project, final EditorFragmentComponent fragment) throws Exception {
     final byte[] picture = createPicture(fragment);
     if (picture == null) return;
     final Twitter twitter = authorize(project);
@@ -90,23 +121,28 @@ public class TweetCodeAction extends AnAction {
   }
 
   private byte[] createPicture(EditorFragmentComponent fragment) {
-    final Dimension size = fragment.getPreferredSize();
-    fragment.setSize(size);
-    fragment.doLayout();
-    final BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
-    final Graphics graphics = image.getGraphics();
-    UISettings.setupAntialiasing(graphics);
-    fragment.printAll(graphics);
-    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    try {
-      ImageIO.write(image, "png", stream);
-    } catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
-    graphics.dispose();
-    return stream.toByteArray();
+    final BufferedImage image = createBufferedImage(fragment);
+	  final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+	  try {
+		  ImageIO.write(image, "png", stream);
+	  } catch (IOException e) {
+		  LOG.error(e);
+		  return null;
+	  }
+	  return stream.toByteArray();
   }
+
+	private BufferedImage createBufferedImage(EditorFragmentComponent fragment) {
+		final Dimension size = fragment.getPreferredSize();
+		fragment.setSize(size);
+		fragment.doLayout();
+		final BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+		final Graphics graphics = image.getGraphics();
+		UISettings.setupAntialiasing(graphics);
+		fragment.printAll(graphics);
+		graphics.dispose();
+		return image;
+	}
 
   private Twitter authorize(final Project project) throws TwitterException, IOException, URISyntaxException {
     final Twitter twitter = new TwitterFactory().getInstance();

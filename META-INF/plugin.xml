@@ -1,0 +1,25 @@
+<idea-plugin version="2">
+  <id>com.github.denofevil.TweetCode</id>
+  <name>TweetCode</name>
+  <version>1.0</version>
+  <vendor email="dennis.ushakov@jetbrains.com" url="https://github.com/denofevil/TweetCode">Dennis Ushakov</vendor>
+
+  <description><![CDATA[
+      Tweets selected code
+      ]]>
+  </description>
+
+  <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Build+Number+Ranges for description -->
+  <idea-version since-build="107.105"/>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <actions>
+    <action id="com.github.denofevil.TweetCodeAction" class="com.github.denofevil.TweetCodeAction" text="Tweet Code">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+      <applicationService serviceInterface="com.github.denofevil.TwitterSettings" serviceImplementation="com.github.denofevil.TwitterSettings"/>
+  </extensions>
+</idea-plugin>

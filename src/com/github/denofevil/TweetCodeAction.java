@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.UIUtil;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -94,7 +93,7 @@ public class TweetCodeAction extends AnAction {
     final Dimension size = fragment.getPreferredSize();
     fragment.setSize(size);
     fragment.doLayout();
-    final BufferedImage image = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     final Graphics graphics = image.getGraphics();
     UISettings.setupAntialiasing(graphics);
     fragment.printAll(graphics);

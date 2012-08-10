@@ -29,13 +29,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
-import static java.io.File.createTempFile;
 
 /**
  * @author Dennis.Ushakov
@@ -63,31 +61,31 @@ public class TweetCodeAction extends AnAction {
     selectionModel.removeSelection();
     final EditorFragmentComponent fragment = EditorFragmentComponent.createEditorFragmentComponent(editor, startLine, endLine, false, false);
     try {
-	    if(SystemInfo.isMacOSMountainLion) {
-		    doMountainLionTweet(project, fragment);
-	    } else {
-        doTweet(project, fragment);
-	    }
+      final byte[] picture = createPicture(fragment);
+      if(picture != null) {
+        if(SystemInfo.isMacOSMountainLion) {
+          doMountainLionTweet(project, picture);
+        } else {
+          doTweet(project, picture);
+        }
+      }
     } catch (Exception e1) {
       e1.printStackTrace();
     }
     selectionModel.setSelection(start, end);
   }
 
-	private void doMountainLionTweet(Project project, EditorFragmentComponent fragment) throws Exception {
-		BufferedImage image = createBufferedImage(fragment);
+	private void doMountainLionTweet(Project project, byte[] imageBytes) throws Exception {
 		try {
-			File tempFile = createTempFile("idea", "tweet.png");
-			tempFile.deleteOnExit();
-			ImageIO.write(image, "png", tempFile);
-			final ID nsImage = invoke(invoke("NSImage", "alloc"), "initByReferencingFile:", nsString(tempFile.getAbsolutePath()));
-			final ID shareItems = invoke(invoke("NSArray", "alloc"), "initWithObjects:", nsImage);
 			ID sharingService = invoke(getObjcClass("NSSharingService"), "sharingServiceNamed:", nsString("com.apple.share.Twitter.post"));
 			if(!sharingService.equals(ID.NIL)) {
+				final ID imageData = invoke(invoke("NSData", "alloc"), "initWithBytes:length:", imageBytes, imageBytes.length);
+				final ID nsImage = invoke(invoke("NSImage", "alloc"), "initWithData:", imageData);
+				final ID shareItems = invoke(invoke("NSArray", "alloc"), "initWithObjects:", nsImage);
 				invoke(sharingService, "performWithItems:", shareItems);
 			} else {
 				//fallback
-				doTweet(project, fragment);
+				doTweet(project, imageBytes);
 			}
 		} catch (IOException e) {
 			LOG.error(e);
@@ -95,9 +93,7 @@ public class TweetCodeAction extends AnAction {
 		}
 	}
 
-	private void doTweet(Project project, final EditorFragmentComponent fragment) throws Exception {
-    final byte[] picture = createPicture(fragment);
-    if (picture == null) return;
+	private void doTweet(Project project, final byte[] imageBytes) throws Exception {
     final Twitter twitter = authorize(project);
     if (twitter == null) {
       Messages.showErrorDialog(project, "Failed to authorize with twitter", "Can't Tweet :(");
@@ -117,7 +113,7 @@ public class TweetCodeAction extends AnAction {
       }
     });
     if (text == null) return;
-    imageUpload.upload("CodeFragment", new ByteArrayInputStream(picture), text);
+    imageUpload.upload("CodeFragment", new ByteArrayInputStream(imageBytes), text);
   }
 
   private byte[] createPicture(EditorFragmentComponent fragment) {

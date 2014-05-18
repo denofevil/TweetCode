@@ -47,9 +47,8 @@ public class TweetCodeAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
-    final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-    assert editor != null;
+    final Project project = e.getRequiredData(LangDataKeys.PROJECT);
+    final Editor editor = e.getRequiredData(LangDataKeys.EDITOR);
     final Document document = editor.getDocument();
     final SelectionModel selectionModel = editor.getSelectionModel();
 
@@ -132,7 +131,8 @@ public class TweetCodeAction extends AnAction {
 		final Dimension size = fragment.getPreferredSize();
 		fragment.setSize(size);
 		fragment.doLayout();
-		final BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+        //noinspection UndesirableClassUsage
+        final BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
 		final Graphics graphics = image.getGraphics();
 		UISettings.setupAntialiasing(graphics);
 		fragment.printAll(graphics);
@@ -169,7 +169,8 @@ public class TweetCodeAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-    e.getPresentation().setVisible(editor != null && editor.getSelectionModel().hasSelection());
+    final Project project = e.getData(LangDataKeys.PROJECT);
+    final Editor editor = e.getData(LangDataKeys.EDITOR);
+    e.getPresentation().setVisible(project != null && editor != null && editor.getSelectionModel().hasSelection());
   }
 }

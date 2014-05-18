@@ -69,8 +69,8 @@ public class TweetCodeAction extends AnAction {
           doTweet(project, picture);
         }
       }
-    } catch (Exception e1) {
-      e1.printStackTrace();
+    } catch (Exception exception) {
+      LOG.error(exception);
     }
     selectionModel.setSelection(start, end);
   }
